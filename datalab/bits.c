@@ -270,7 +270,16 @@ int howManyBits(int x) {
  *   Rating: 4
  */
 unsigned floatScale2(unsigned uf) {
-  return 2;
+    unsigned exp = (uf & (0xff << 23)) >> 23;
+    unsigned fraction = uf & 0x7fffff;
+    unsigned signedBit = (uf & (0x1 << 31)) >> 31;
+    if (0xff == exp) return uf; // NaN, Infinite
+    if (0 == exp && 0 == fraction) return uf; // 0
+    if (0 != exp) return ((exp+1) << 23) | (signedBit << 31) | fraction; // exp != 0 && fraction != 0
+    else { // exp == 0 && fraction != 0
+	if (signedBit == 0) return uf + uf;
+	else return (signedBit << 31) | (fraction + fraction);
+    }
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
@@ -285,7 +294,13 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  */
 int floatFloat2Int(unsigned uf) {
-  return 2;
+    unsigned exp = (uf & (0xff << 23)) >> 23;
+    unsigned fraction = uf & 0x7fffff;
+    unsigned signedBit = (uf & (0x1 << 31)) >> 31;
+    if (0xff == exp || exp > 154) return 0x80000000u; // NaN, Infinite, output of range normalize
+    if (0 == exp || exp < 127) return 0; // 0, denormalize
+    if (signedBit) return ~(((1 << 27) | fraction) >> (exp - 100)) + 1;
+    return ((1 << 27) | fraction) >> (exp - 100);
 }
 /* 
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
