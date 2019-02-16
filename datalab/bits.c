@@ -255,7 +255,18 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
-  return 0;
+    int signedMask = x >> 31;
+    int minusOne = ~1 + 1;
+    int BaseVal = (~signedMask & x) | (signedMask & ~x);
+    int bitCnt = 0;
+    int SixteenMask = (0xff << 8) | 0xff;
+    bitCnt = (!(BaseVal & (SixteenMask << 16))+minusOne) & 16;
+    bitCnt = bitCnt + ((!(BaseVal & (0xff << (bitCnt + 8))) + minusOne) & 8);
+    bitCnt = bitCnt + ((!(BaseVal & (0xf << (bitCnt + 4))) + minusOne) & 4);
+    bitCnt = bitCnt + ((!(BaseVal & (0x3 << (bitCnt + 2))) + minusOne) & 2);
+    bitCnt = bitCnt + ((!(BaseVal & (0x1 << (bitCnt + 1))) + minusOne) & 1);
+    bitCnt = bitCnt + !!(BaseVal);
+    return bitCnt+1;
 }
 //float
 /* 
